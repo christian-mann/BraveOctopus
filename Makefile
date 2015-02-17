@@ -1,2 +1,7 @@
-all:
-	gcc GeneticAlgorithm.cpp -std=c++11
+CPPFLAGS = --std=c++11 -Wall -g
+
+all: *.cpp
+	g++ $(CPPFLAGS) *.cpp
+
+%.o: %.cpp
+	g++ $(CPPFLAGS) -c $<
