@@ -112,6 +112,7 @@ public:
 			c1 = std::get<0>(children);
 			c2 = std::get<1>(children);
 
+			std::cout << p1 << ", " << p2 << " -> " << c1 << ", " << c2 << std::endl;
 			child_pool.push_back(c1);
 			child_pool.push_back(c2);
 		}
