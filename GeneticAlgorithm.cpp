@@ -9,6 +9,9 @@
 #include <vector>
 #include <stdexcept>
 
+
+using namespace std;
+
 template <class C>
 class GeneticAlgorithm {
 	
@@ -59,9 +62,9 @@ public:
 		}
 
 		std::cout << "Final population after " << generations << " generations:" << std::endl;
-		for (C& elem : this->population) {
-			std::cout << elem << std::endl;
-		}
+		//for (C& elem : this->population) {
+			//std::cout << elem << std::endl;
+		//}
 	}
 
 	void step_once(void) {
@@ -69,41 +72,14 @@ public:
 			child_pool,
 			mutated_child_pool;
 
-		// assign fitness values for each
-		std::cout << "Getting fitness values..." << std::endl;
-		std::map<C, float> fitness_values;
-		float fitness_total = 0;
-		for (C& chrom : this->population) {
-			float fitness = this->fitness_function(chrom);
-			std::cout << "fitness(" << chrom << ") = " << fitness << std::endl;
-			fitness_values[chrom] = fitness;
-			fitness_total += fitness;
-		}
-
-		unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-		std::default_random_engine generator (seed);
-		std::uniform_real_distribution<float> uniform_dist(0, fitness_total);
-
-		// create parent pool
-		std::cout << "Creating parent pool (roulette)..." << std::endl;
-		while (parent_pool.size() < this->population_size) {
-			// generate random number
-			float r = uniform_dist(generator);
-			for (C& chrom : this->population) {
-				r -= fitness_values[chrom];
-				if (r <= 0) {
-					std::cout << "Selecting chromosome " << chrom << " for parent pool" << std::endl;
-					parent_pool.push_back(chrom);
-					break;
-				}
-			}
-		}
+		// create the parent pool
+		this->roulette_selection(this->population, parent_pool);
 
 		// create the child pool
-		std::cout << "Creating the child pool (crossover)..." << std::endl;
+		//std::cout << "Creating the child pool (crossover)..." << std::endl;
 		while (child_pool.size() < this->population_size) {
-			C p1 = parent_pool[rand() % this->population.size()];
-			C p2 = parent_pool[rand() % this->population.size()];
+			C& p1 = parent_pool[rand() % this->population.size()];
+			C& p2 = parent_pool[rand() % this->population.size()];
 
 			std::tuple<C, C> children = this->crossover(p1, p2);
 			C c1,
@@ -112,22 +88,24 @@ public:
 			c1 = std::get<0>(children);
 			c2 = std::get<1>(children);
 
-			std::cout << p1 << ", " << p2 << " -> " << c1 << ", " << c2 << std::endl;
+			//std::cout << p1 << ", " << p2 << " -> " << c1 << ", " << c2 << std::endl;
 			child_pool.push_back(c1);
 			child_pool.push_back(c2);
 		}
 
 		// create the mutated child pool
-		std::cout << "Mutating..." << std::endl;
+		unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+		std::default_random_engine generator (seed);
+		//std::cout << "Mutating..." << std::endl;
 		for (C& chrom : child_pool) {
 			C mutated;
 			float r = std::uniform_real_distribution<float>(0, 1)(generator);
 			if (r < this->mutation_rate) {
 				mutated = this->mutate(chrom);
-				std::cout << chrom << " -> " << mutated << std::endl;
+				//std::cout << chrom << " -> " << mutated << std::endl;
 			} else {
 				mutated = chrom;
-				std::cout << chrom << std::endl;
+				//std::cout << chrom << std::endl;
 			}
 			mutated_child_pool.push_back(mutated);
 		}
@@ -136,7 +114,7 @@ public:
 	}
 
 	virtual std::tuple<C, C> crossover(C& chrom1, C& chrom2) = 0;
-	virtual int gen_random(void) = 0;
+	virtual C gen_random(void) = 0;
 	virtual float fitness_function(C& chrom) = 0;
 	virtual C mutate(C& chrom) = 0;
 	virtual bool should_stop(void) = 0;
@@ -147,6 +125,64 @@ private:
 	float mutation_rate,
 		  crossover_rate;
 	int population_size;
+
+	void roulette_selection(std::vector<C>& population, std::vector<C> &parent_pool) {
+		// assign fitness values for each
+		std::cout << "Getting fitness values..." << std::endl;
+		std::map<C, float> fitness_values;
+		float fitness_total = 0;
+		float fitness_max = 0;
+		for (C& chrom : this->population) {
+			float fitness = this->fitness_function(chrom);
+			std::cout << fitness << " ";
+			fitness_values[chrom] = fitness;
+			fitness_total += fitness;
+			fitness_max = max(fitness_max, fitness);
+		}
+		std::cout << std::endl;
+		std::cout << "Average fitness: " << fitness_total / population.size() << std::endl;
+		cout << "Maximum fitness: " << fitness_max << endl;
+
+		unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+		std::default_random_engine generator (seed);
+		std::uniform_real_distribution<float> uniform_dist(0, fitness_total);
+		// create parent pool
+		std::cout << "Creating parent pool (roulette)..." << std::endl;
+		while (parent_pool.size() < this->population_size) {
+			// generate random number
+			float r = uniform_dist(generator);
+			for (C& chrom : this->population) {
+				r -= fitness_values[chrom];
+				if (r <= 0) {
+					//std::cout << "Selecting chromosome " << chrom << " for parent pool" << std::endl;
+					parent_pool.push_back(chrom);
+					break;
+				}
+			}
+		}
+	}
+
+	void rank_selection(std::vector<C>& population, std::vector<C>& parent_pool) {
+		// assign fitness values for each
+		std::cout << "Getting fitness values..." << std::endl;
+		vector<pair<float, C>> fitness_values;
+		float fitness_total;
+		float fitness_max;
+		for (C& chrom : this->population) {
+			float fitness = this->fitness_function(chrom);
+			fitness_total += fitness;
+			fitness_max = max(fitness_max, fitness);
+			std::cout << fitness << " ";
+			fitness_values.push_back(pair<float, C>(fitness, chrom));
+		}
+		cout << endl;
+		cout << "Average fitness: " << fitness_total / population.size() << endl;
+		cout << "Maximum fitness: " << fitness_max << endl;
+
+		parent_pool.insert(parent_pool.begin(), population.begin(), population.end());
+
+		std::sort(parent_pool.begin(), parent_pool.end());
+	}
 };
 
 #endif

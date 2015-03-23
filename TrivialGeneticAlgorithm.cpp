@@ -8,7 +8,7 @@
 class TrivialGeneticAlgorithm : public GeneticAlgorithm<int> {
 	std::tuple<int, int> crossover(int& p1, int& p2) {
 		int crossover_key = rand() % 1024;
-		std::cout << "crossover_key = " << std::hex << crossover_key << std::endl;
+		//std::cout << "crossover_key = " << std::hex << crossover_key << std::endl;
 
 		int c1 = (p1 & crossover_key) | (p2 & ~crossover_key);
 		int c2 = (p1 & ~crossover_key) | (p2 & crossover_key);
