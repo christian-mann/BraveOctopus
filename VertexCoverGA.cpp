@@ -4,6 +4,8 @@
 #include <vector>
 #include <valarray>
 
+#include <math.h>
+
 using namespace std;
 
 class VertexCoverGeneticAlgorithm : public GeneticAlgorithm<vector<bool>> {
@@ -74,17 +76,26 @@ public:
 	}
 
 	virtual float fitness_function(vector<bool>& chrom) {
+		static int fn_count = 0;
+		fn_count++;
+		if (fn_count % 100 == 0)
+			cout << "fn_count = " << fn_count << endl;
+
 		int cover_size = 0;
 		for (int i = 0; i < chrom.size(); i++) {
 			cover_size += chrom[i];
 		}
-		return this->graph.size() - cover_size - this->graph.num_uncovered_by(chrom);
+
+		int size_fitness = this->graph.size() - cover_size - this->graph.num_uncovered_by(chrom);
 		if (this->graph.num_uncovered_by(chrom) > 0) {
-			return 0;
+			return size_fitness / this->graph.num_uncovered_by(chrom);
 		} else {
-			return this->graph.size() - cover_size;
+			return size_fitness * 2;
 		}
-		//return this->graph.size() - this->graph.num_uncovered_by(chrom);
+	}
+
+	virtual bool is_viable(vector<bool>& chrom) {
+		return this->graph.num_uncovered_by(chrom) == 0;
 	}
 
 	virtual vector<bool> gen_random() {

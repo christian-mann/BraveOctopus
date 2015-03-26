@@ -59,6 +59,16 @@ public:
 
 		for (int i = 0; i < generations; i++) {
 			this->step_once();
+			int num_viable = 0,
+				num_inviable = 0;
+			for (C chrom : this->population) {
+				if (this->is_viable(chrom)) {
+					num_viable++;
+				} else {
+					num_inviable++;
+				}
+			}
+			cout << num_viable << " viable; " << num_inviable << " inviable" << endl;
 		}
 
 		std::cout << "Final population after " << generations << " generations:" << std::endl;
@@ -68,9 +78,19 @@ public:
 	}
 
 	void step_once(void) {
-		std::vector<C> parent_pool,
+		vector<C>
+			elite_pool,
+			parent_pool,
 			child_pool,
 			mutated_child_pool;
+
+		// create the elite pool
+		this->absolute_selection(this->population, elite_pool, 2);
+
+		for (C& chrom : elite_pool) {
+			cout << "elite: " << this->fitness_function(chrom) << endl;
+		}
+		cout << endl;
 
 		// create the parent pool
 		this->roulette_selection(this->population, parent_pool);
@@ -110,9 +130,17 @@ public:
 			mutated_child_pool.push_back(mutated);
 		}
 
+		this->population.clear();
+		// put most of the new in
 		this->population = mutated_child_pool;
+
+		// put the elite elements back in
+		for (int i = 0; i < elite_pool.size(); i++) {
+			this->population[i] = elite_pool[i];
+		}
 	}
 
+	virtual bool is_viable(C& chrom) = 0;
 	virtual std::tuple<C, C> crossover(C& chrom1, C& chrom2) = 0;
 	virtual C gen_random(void) = 0;
 	virtual float fitness_function(C& chrom) = 0;
@@ -182,6 +210,31 @@ private:
 		parent_pool.insert(parent_pool.begin(), population.begin(), population.end());
 
 		std::sort(parent_pool.begin(), parent_pool.end());
+	}
+
+	void absolute_selection(vector<C> &population, vector<C> &pool, int max_elements = -1) {
+		if (max_elements == -1) {
+			max_elements = population.size();
+		}
+		// assign fitness values for each
+		vector<pair<float, C>> fitness_values;
+		for (C& chrom : this->population) {
+			float fitness = this->fitness_function(chrom);
+			fitness_values.push_back(pair<float, C>(-fitness, chrom));
+		}
+
+		std::sort(fitness_values.begin(), fitness_values.end());
+
+		cout << "fitness_values.size() == " << fitness_values.size() << endl;
+
+		cout << "pushing back...";
+		for (int i = 0; i < 2; i++) {
+			pool.push_back(get<1>(fitness_values[i]));
+		}
+		cout << "pushed back" << endl;
+
+		//pool.insert(pool.begin(), population.begin(), population.begin() + max_elements);
+
 	}
 };
 
