@@ -1,4 +1,4 @@
-CPPFLAGS = --std=c++11 -Wall -g
+CPPFLAGS = --std=c++11 -Wall -g -stdlib=libc++ -Wall
 
 all: a.out
 

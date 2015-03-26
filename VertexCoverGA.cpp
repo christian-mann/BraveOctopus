@@ -1,5 +1,6 @@
 #include "GeneticAlgorithm.cpp"
 #include "Graph.cpp"
+#include "Chromosome.cpp"
 
 #include <vector>
 #include <valarray>
@@ -8,7 +9,115 @@
 
 using namespace std;
 
-class VertexCoverGeneticAlgorithm : public GeneticAlgorithm<vector<bool>> {
+Graph static_graph;
+
+class VertexCoverChrom : public Chromosome<VertexCoverChrom>, public vector<bool> {
+
+public:
+	VertexCoverChrom()
+	{
+		// this doesn't make sense
+		// please don't use it by itself
+	}
+
+	~VertexCoverChrom() noexcept
+	{ }
+
+	VertexCoverChrom(Graph *g) :
+	vector<bool> ()
+	{
+		this->graph = g;
+	}
+
+	VertexCoverChrom(Graph *g, vector<bool> arr) :
+	vector<bool>(arr)
+	{
+		this->graph = g;
+	}
+
+	virtual float fitness() {
+		if (this->fitness_cache_valid) {
+			return this->fitness_cache;
+		}
+
+		int cover_size = 0;
+		for (int i = 0; i < this->size(); i++) {
+			cover_size += this->at(i);
+		}
+
+		int num_uncovered = this->graph->num_uncovered_by(*this);
+		int size_fitness = this->graph->size() - cover_size - num_uncovered;
+		if (num_uncovered > 0) {
+			this->fitness_cache = size_fitness / num_uncovered;
+		} else {
+			this->fitness_cache = size_fitness * 2;
+		}
+
+		this->fitness_cache_valid = true;
+		return this->fitness_cache;
+	}
+
+	virtual VertexCoverChrom mutate(float mutation_rate = 0.05) {
+		// randomly flip bits
+		VertexCoverChrom child = *this;
+		int N = rand() % child.size();
+		
+		child[N] = child[N] ^ 1;
+
+		return child;
+	}
+
+	virtual VertexCoverChrom crossover(VertexCoverChrom& other) {
+		return this->uniform_crossover(other);
+	}
+
+	virtual VertexCoverChrom single_point_crossover(VertexCoverChrom& other) {
+		// single-point crossover
+		int size = other.size();
+		int N = rand() % size;
+
+		VertexCoverChrom child(this->graph);
+		child.resize(size);
+		
+		for (int i = 0; i < size; i++) {
+			if (i <= N) {
+				child[i] = other.at(i);
+			} else {
+				child[i] = this->at(i);
+			}
+		}
+		return child;
+	}
+
+	virtual VertexCoverChrom uniform_crossover(VertexCoverChrom& other) {
+		// single-point crossover
+		int size = other.size();
+
+		VertexCoverChrom child(this->graph);
+		child.resize(size);
+		
+		for (int i = 0; i < size; i++) {
+			bool b = rand() % 2;
+			if (b) {
+				child[i] = this->at(i);
+			} else {
+				child[i] = other.at(i);
+			}
+		}
+		return child;
+	}
+
+	virtual bool is_viable() {
+		return this->graph->num_uncovered_by(*this) == 0;
+	}
+
+private:
+	Graph *graph;
+	float fitness_cache;
+	bool fitness_cache_valid;
+};
+
+class VertexCoverGeneticAlgorithm : public GeneticAlgorithm<VertexCoverChrom> {
 private:
 	Graph graph;
 public:
@@ -16,94 +125,12 @@ public:
 		this->graph = g;
 	}
 
-	virtual tuple<vector<bool>, vector<bool>> crossover(vector<bool>& parent1, vector<bool>& parent2) {
-		return uniform_crossover(parent1, parent2);
-	}
-
-	virtual tuple<vector<bool>, vector<bool>> single_point_crossover(vector<bool>& parent1, vector<bool>& parent2) {
-		// single-point crossover
-		int size = parent1.size();
-		int N = rand() % size;
-
-		vector<bool> child1(size),
-			         child2(size);
-		
-		for (int i = 0; i < parent1.size(); i++) {
-			if (i <= N) {
-				child1[i] = parent1[i];
-				child1[i] = parent2[i];
-			} else {
-				child1[i] = parent2[i];
-				child2[i] = parent1[i];
-			}
-		}
-
-		return tuple<vector<bool>, vector<bool>>(child1, child2);
-	}
-
-	virtual tuple<vector<bool>, vector<bool>> uniform_crossover(vector<bool>& parent1, vector<bool>& parent2) {
-		// uniform crossover
-		int size = parent1.size();
-
-		vector<bool> child1(size),
-			         child2(size);
-
-		for (int i = 0; i < size; i++) {
-			bool b = rand() % 2;
-			if (b) {
-				child1[i] = parent1[i];
-				child2[i] = parent2[i];
-			} else {
-				child1[i] = parent2[i];
-				child2[i] = parent1[i];
-			}
-		}
-
-		return tuple<vector<bool>, vector<bool>>(child1, child2);
-	}
-
-	virtual vector<bool> mutate(vector<bool>& parent) {
-		// randomly flip bits
-		vector<bool> child = parent;
-		int N = rand() % child.size();
-
-		// apparently this is invalid??
-		//child[N] ^= 1;
-		
-		child[N] = child[N] ^ 1;
-
-		return child;
-	}
-
-	virtual float fitness_function(vector<bool>& chrom) {
-		static int fn_count = 0;
-		fn_count++;
-		if (fn_count % 100 == 0)
-			cout << "fn_count = " << fn_count << endl;
-
-		int cover_size = 0;
-		for (int i = 0; i < chrom.size(); i++) {
-			cover_size += chrom[i];
-		}
-
-		int size_fitness = this->graph.size() - cover_size - this->graph.num_uncovered_by(chrom);
-		if (this->graph.num_uncovered_by(chrom) > 0) {
-			return size_fitness / this->graph.num_uncovered_by(chrom);
-		} else {
-			return size_fitness * 2;
-		}
-	}
-
-	virtual bool is_viable(vector<bool>& chrom) {
-		return this->graph.num_uncovered_by(chrom) == 0;
-	}
-
-	virtual vector<bool> gen_random() {
+	virtual VertexCoverChrom gen_random() {
 		vector<bool> chrom(this->graph.size());
 		for (int i = 0; i < chrom.size(); i++) {
 			chrom[i] = rand() % 2;
 		}
-		return chrom;
+		return VertexCoverChrom(&(this->graph), chrom);
 	}
 
 	virtual bool should_stop() { return false; }
