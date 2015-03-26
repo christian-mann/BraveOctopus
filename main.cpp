@@ -41,13 +41,20 @@ int main(int argc, char **argv) {
 	int generations = (int) args.get("generations");
 
 
-	// make good solution
 	Graph g(graph_size);
+	// make perfect solution
+	for (int j = 0; j < graph_size; j++) {
+		g.add_edge(0, j);
+	}
+
+	/*
+	// make good solution
 	for (int i = 0; i < 3; i++) {
 		for (int j = (graph_size * i) / 5; j < (graph_size * (i+1))/5; j++) {
 			g.add_edge(i, j);
 		}
 	}
+	*/
 
 	// hide it
 	for (int i = 0; i < graph_size; i++) {

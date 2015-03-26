@@ -73,7 +73,10 @@ public:
 			cout << num_viable << " viable; " << num_inviable << " inviable" << endl;
 		}
 
-		cout << "Final population after " << generations << " generations:" << endl;
+		cout << "Best element after " << generations << " generations: " << endl;
+		vector<C> best;
+		this->absolute_selection(this->population, best, 1);
+		cout << best[0] << endl;
 		//for (C& elem : this->population) {
 			//cout << elem << endl;
 		//}

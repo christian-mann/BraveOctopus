@@ -46,7 +46,7 @@ public:
 		}
 
 		int num_uncovered = this->graph->num_uncovered_by(*this);
-		int size_fitness = this->graph->size() - cover_size - num_uncovered;
+		int size_fitness = this->graph->size() - cover_size;
 		if (num_uncovered > 0) {
 			this->fitness_cache = size_fitness / num_uncovered;
 		} else {
@@ -111,11 +111,29 @@ public:
 		return this->graph->num_uncovered_by(*this) == 0;
 	}
 
+	int num_uncovered() {
+		return this->graph->num_uncovered_by(*this);
+	}
+
 private:
 	Graph *graph;
 	float fitness_cache;
 	bool fitness_cache_valid;
 };
+
+ostream &operator<<(ostream &os, VertexCoverChrom &m) {
+	os << "vertex count: " << accumulate(m.begin(), m.end(), 0) << endl;
+	os << "vertex set: ";
+	for (int i = 0; i < m.size(); i++) {
+		if (m[i]) {
+			os << i << " ";
+		}
+	}
+	os << endl;
+	os << "num uncovered: " << m.num_uncovered() << endl;
+	os << "fitness: " << m.fitness() << endl;
+	return os;
+}
 
 class VertexCoverGeneticAlgorithm : public GeneticAlgorithm<VertexCoverChrom> {
 private:
