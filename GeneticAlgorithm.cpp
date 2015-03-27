@@ -89,6 +89,20 @@ public:
 			child_pool,
 			mutated_child_pool;
 
+		// output info about the generation
+		cout << "Getting fitness values..." << endl;
+		float fitness_total = 0;
+		float fitness_max = 0;
+		for (C& chrom : this->population) {
+			float fitness = chrom.fitness();
+			cout << fitness << " ";
+			fitness_total += fitness;
+			fitness_max = max(fitness_max, fitness);
+		}
+		cout << endl;
+		cout << "Average fitness: " << fitness_total / population.size() << endl;
+		cout << "Maximum fitness: " << fitness_max << endl;
+		
 		// create the elite pool
 		this->absolute_selection(this->population, elite_pool, 2);
 
@@ -98,7 +112,7 @@ public:
 		cout << endl;
 
 		// create the parent pool
-		this->roulette_selection(this->population, parent_pool);
+		this->tournament_selection(this->population, parent_pool);
 
 		// create the child pool
 		//cout << "Creating the child pool (crossover)..." << endl;
@@ -155,17 +169,11 @@ private:
 		cout << "Getting fitness values..." << endl;
 		vector<pair<C, float>> fitness_values;
 		float fitness_total = 0;
-		float fitness_max = 0;
 		for (C& chrom : this->population) {
 			float fitness = chrom.fitness();
-			cout << fitness << " ";
-			fitness_values.push_back(pair<C, float>(chrom, fitness));
 			fitness_total += fitness;
-			fitness_max = max(fitness_max, fitness);
 		}
 		cout << endl;
-		cout << "Average fitness: " << fitness_total / population.size() << endl;
-		cout << "Maximum fitness: " << fitness_max << endl;
 
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		default_random_engine generator (seed);
@@ -178,7 +186,6 @@ private:
 			for (C& chrom : this->population) {
 				r -= chrom.fitness();
 				if (r <= 0) {
-					//cout << "Selecting chromosome " << chrom << " for parent pool" << endl;
 					parent_pool.push_back(chrom);
 					break;
 				}
@@ -231,6 +238,18 @@ private:
 
 		//pool.insert(pool.begin(), population.begin(), population.begin() + max_elements);
 
+	}
+
+	void tournament_selection(vector<C> &population, vector<C>& pool) {
+		while (pool.size() < population.size()) {
+			// take two random elements
+			C &p1 = population[rand() % population.size()];
+			C &p2 = population[rand() % population.size()];
+
+			// pick the better one
+			C &c1 = (p1.fitness() >= p2.fitness()) ? p1 : p2;
+			pool.push_back(c1);
+		}
 	}
 };
 

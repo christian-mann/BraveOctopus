@@ -45,13 +45,11 @@ public:
 			cover_size += this->at(i);
 		}
 
-		int num_uncovered = this->graph->num_uncovered_by(*this);
+		if (cover_size == 0) return 0;
+
 		int size_fitness = this->graph->size() - cover_size;
-		if (num_uncovered > 0) {
-			this->fitness_cache = size_fitness / num_uncovered;
-		} else {
-			this->fitness_cache = size_fitness * 2;
-		}
+		int num_covered = this->graph->size() - this->graph->num_uncovered_by(*this);
+		this->fitness_cache = num_covered * num_covered / cover_size;
 
 		this->fitness_cache_valid = true;
 		return this->fitness_cache;
@@ -118,7 +116,7 @@ public:
 private:
 	Graph *graph;
 	float fitness_cache;
-	bool fitness_cache_valid;
+	bool fitness_cache_valid = false;
 };
 
 ostream &operator<<(ostream &os, VertexCoverChrom &m) {
