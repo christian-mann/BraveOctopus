@@ -238,8 +238,22 @@ private:
 			C &p1 = population[rand() % population.size()];
 			C &p2 = population[rand() % population.size()];
 
+			C &c1 = p1;
+
 			// pick the better one
-			C &c1 = (p1.fitness() >= p2.fitness()) ? p1 : p2;
+			if (p1.fitness() >= p2.fitness()) {
+				if (rand() % 100 < 75) {
+					c1 = p1;
+				} else {
+					c1 = p2;
+				}
+			} else {
+				if (rand() % 100 < 75) {
+					c1 = p2;
+				} else {
+					c1 = p1;
+				}
+			}
 			pool.push_back(c1);
 		}
 	}
