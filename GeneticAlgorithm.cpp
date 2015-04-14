@@ -132,15 +132,7 @@ public:
 		default_random_engine generator (seed);
 		//cout << "Mutating..." << endl;
 		for (C& chrom : child_pool) {
-			C mutated;
-			float r = uniform_real_distribution<float>(0, 1)(generator);
-			if (r < this->mutation_rate) {
-				mutated = chrom.mutate();
-				//cout << chrom << " -> " << mutated << endl;
-			} else {
-				mutated = chrom;
-				//cout << chrom << endl;
-			}
+			C mutated = chrom.mutate(this->mutation_rate);
 			mutated_child_pool.push_back(mutated);
 		}
 

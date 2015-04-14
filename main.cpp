@@ -1,4 +1,5 @@
 #include "GeneticAlgorithm.cpp"
+#include "SimulatedAnnealing.cpp"
 #include "TrivialGeneticAlgorithm.cpp"
 #include "Graph.cpp"
 #include "VertexCoverGA.cpp"
@@ -22,6 +23,11 @@ int main(int argc, char **argv) {
 	parser.add_option("--graph-size")
 		.type("int")
 		.set_default("100");
+	char const* const algorithm_types[] = {"ga", "sa", "hc"};
+	parser.add_option("--algorithm-type")
+		.type("choices")
+		.choices(&algorithm_types[0], &algorithm_types[3])
+		.set_default("ga");
 	parser.add_option("-g", "--generations")
 		.set_default("100")
 		.type("int");
@@ -39,6 +45,8 @@ int main(int argc, char **argv) {
 
 	int graph_size = (int) args.get("graph_size");
 	int generations = (int) args.get("generations");
+	float mutation_rate = (float) args.get("mutation_rate");
+	string algorithm_type = (string) args.get("algorithm_type");
 
 
 	Graph g(graph_size);
@@ -63,7 +71,15 @@ int main(int argc, char **argv) {
 
 
 	// run algorithm
-	VertexCoverGeneticAlgorithm vga(g);
-	vga.set_population_size(100);
-	vga.run(generations);
+	if (algorithm_type == "ga") {
+		VertexCoverGeneticAlgorithm vga(g);
+		vga.set_population_size(100);
+		vga.run(generations);
+	} else if (algorithm_type == "sa") {
+		VertexCoverSimulatedAnnealing vsa(g);
+		vsa.set_temperature(10);
+		vsa.set_iterations(10000);
+		vsa.set_mutation_rate(mutation_rate);
+		vsa.run(generations);
+	}
 }

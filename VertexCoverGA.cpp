@@ -1,4 +1,5 @@
 #include "GeneticAlgorithm.cpp"
+#include "SimulatedAnnealing.cpp"
 #include "Graph.cpp"
 #include "Chromosome.cpp"
 
@@ -47,9 +48,8 @@ public:
 
 		if (cover_size == 0) return 0;
 
-		int size_fitness = this->graph->size() - cover_size;
 		int num_covered = this->graph->size() - this->graph->num_uncovered_by(*this);
-		this->fitness_cache = num_covered * num_covered / cover_size;
+		this->fitness_cache = (float) num_covered * (float) num_covered / (float) cover_size;
 
 		this->fitness_cache_valid = true;
 		return this->fitness_cache;
@@ -58,9 +58,17 @@ public:
 	virtual VertexCoverChrom mutate(float mutation_rate = 0.05) {
 		// randomly flip bits
 		VertexCoverChrom child = *this;
-		int N = rand() % child.size();
+		child.fitness_cache_valid = false;
 		
-		child[N] = child[N] ^ 1;
+		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+		default_random_engine generator (seed);
+
+		for (int i = 0; i < child.size(); i++) {
+			float r = uniform_real_distribution<float>(0, 1)(generator);
+			if (r < mutation_rate) {
+				child[i] = child[i] ^ 1;
+			}
+		}
 
 		return child;
 	}
@@ -151,4 +159,23 @@ public:
 
 	virtual bool should_stop() { return false; }
 
+};
+
+class VertexCoverSimulatedAnnealing : public SimulatedAnnealing<VertexCoverChrom> {
+private:
+	Graph graph;
+public:
+	VertexCoverSimulatedAnnealing(Graph g) {
+		this->graph = g;
+	}
+
+	virtual VertexCoverChrom gen_random() {
+		vector<bool> chrom(this->graph.size());
+		for (int i = 0; i < chrom.size(); i++) {
+			chrom[i] = rand() % 2;
+		}
+		return VertexCoverChrom(&(this->graph), chrom);
+	}
+
+	virtual bool should_stop() { return false; }
 };
