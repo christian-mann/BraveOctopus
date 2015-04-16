@@ -57,20 +57,21 @@ public:
 
 		if (num_selected == 0) return 0;
 
-		float fit = ( 2 * num_covered + num_unselected );
-		this->fitness_cache = fit * fit;
+		//float fit = ( 2 * num_covered + num_unselected );
+		float fit = num_unselected * (is_viable() ? 2 : (num_covered / graph_size) * (num_covered / graph_size) );
+		//
+		//float fit = (num_covered * num_covered * num_covered + num_unselected) * (num_uncovered == 0 ? graph_size : 0.00001);
+		this->fitness_cache = fit;
 		//this->fitness_cache = ((float) num_covered * (float) num_covered - (float) cover_size) / this->graph->size();
 
 		this->fitness_cache_valid = true;
 		return this->fitness_cache;
 	}
 
-	virtual VertexCoverChrom perturb() {
-		VertexCoverChrom child = *this;
-		child.fitness_cache_valid = false;
+	virtual void perturb() {
 		int n = rand() % this->size();
-		child[n] = child[n] ^ 1;
-		return child;
+		at(n) = at(n) ^ 1;
+		fitness_cache_valid = false;
 	};
 
 	virtual VertexCoverChrom mutate(float mutation_rate = 0.05) {
@@ -146,7 +147,7 @@ public:
 				}
 			}
 			at(best_bit) = 1;
-			cout << bitstring() << endl;
+			//cout << bitstring() << endl;
 		}
 	}
 
@@ -206,6 +207,11 @@ public:
 		return VertexCoverChrom(&(this->graph), chrom);
 	}
 
+	virtual VertexCoverChrom gen_blank() {
+		vector<bool> chrom(this->graph.size());
+		return VertexCoverChrom(&(this->graph), chrom);
+	}
+
 	virtual bool should_stop() { return false; }
 
 };
@@ -216,6 +222,11 @@ private:
 public:
 	VertexCoverSimulatedAnnealing(Graph g) {
 		this->graph = g;
+	}
+
+	virtual VertexCoverChrom gen_blank() {
+		vector<bool> chrom(this->graph.size());
+		return VertexCoverChrom(&(this->graph), chrom);
 	}
 
 	virtual VertexCoverChrom gen_random() {
@@ -235,6 +246,11 @@ private:
 public:
 	VertexCoverHillClimbing (Graph g) {
 		this->graph = g;
+	}
+
+	virtual VertexCoverChrom gen_blank() {
+		vector<bool> chrom(this->graph.size());
+		return VertexCoverChrom(&(this->graph), chrom);
 	}
 
 	virtual VertexCoverChrom gen_random() {

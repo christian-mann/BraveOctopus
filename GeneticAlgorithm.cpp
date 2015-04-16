@@ -72,7 +72,8 @@ public:
 					num_inviable++;
 				}
 			}
-			cout << num_viable << " viable; " << num_inviable << " inviable" << endl;
+			if (i % 100 == 0)
+				cout << "Generation " << i << " " << num_viable << " viable; " << num_inviable << " inviable" << endl;
 		}
 
 		cout << "Best element after " << generations << " generations: " << endl;
@@ -92,26 +93,26 @@ public:
 			mutated_child_pool;
 
 		// output info about the generation
-		cout << "Getting fitness values..." << endl;
+		//cout << "Getting fitness values..." << endl;
 		float fitness_total = 0;
 		float fitness_max = 0;
 		for (C& chrom : this->population) {
 			float fitness = chrom.fitness();
-			cout << fitness << " ";
+			//cout << fitness << " ";
 			fitness_total += fitness;
 			fitness_max = max(fitness_max, fitness);
 		}
-		cout << endl;
-		cout << "Average fitness: " << fitness_total / population.size() << endl;
-		cout << "Maximum fitness: " << fitness_max << endl;
+		//cout << endl;
+		//cout << "Average fitness: " << fitness_total / population.size() << endl;
+		//cout << "Maximum fitness: " << fitness_max << endl;
 		
 		// create the elite pool
 		this->absolute_selection(this->population, elite_pool, ELITE_POOL_SIZE);
 
 		for (C& chrom : elite_pool) {
-			cout << "elite: " << chrom.fitness() << endl;
+			//cout << "elite: " << chrom.fitness() << endl;
 		}
-		cout << endl;
+		//cout << endl;
 
 		// create the parent pool
 		this->tournament_selection(this->population, parent_pool);
@@ -124,6 +125,11 @@ public:
 
 			C c1 = p1.crossover(p2);
 			C c2 = p2.crossover(p1);
+
+			if (rand() % 100 == 0) {
+				c1.fixup();
+				c2.fixup();
+			}
 
 			child_pool.push_back(c1);
 			child_pool.push_back(c2);
@@ -145,6 +151,7 @@ public:
 	}
 
 	virtual C gen_random(void) = 0;
+	virtual C gen_blank(void) = 0;
 	virtual bool should_stop(void) = 0;
 
 protected:
@@ -156,20 +163,20 @@ protected:
 
 	void roulette_selection(vector<C>& population, vector<C> &parent_pool) {
 		// assign fitness values for each
-		cout << "Getting fitness values..." << endl;
+		//cout << "Getting fitness values..." << endl;
 		vector<pair<C, float>> fitness_values;
 		float fitness_total = 0;
 		for (C& chrom : this->population) {
 			float fitness = chrom.fitness();
 			fitness_total += fitness;
 		}
-		cout << endl;
+		//cout << endl;
 
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		default_random_engine generator (seed);
 		uniform_real_distribution<float> uniform_dist(0, fitness_total);
 		// create parent pool
-		cout << "Creating parent pool (roulette)..." << endl;
+		//cout << "Creating parent pool (roulette)..." << endl;
 		while (parent_pool.size() < this->population_size) {
 			// generate random number
 			float r = uniform_dist(generator);
@@ -185,7 +192,7 @@ protected:
 
 	void rank_selection(vector<C>& population, vector<C>& parent_pool) {
 		// assign fitness values for each
-		cout << "Getting fitness values..." << endl;
+		//cout << "Getting fitness values..." << endl;
 		vector<pair<float, C>> fitness_values;
 		float fitness_total;
 		float fitness_max;
@@ -193,12 +200,12 @@ protected:
 			float fitness = chrom.fitness();
 			fitness_total += fitness;
 			fitness_max = max(fitness_max, fitness);
-			cout << fitness << " ";
+			//cout << fitness << " ";
 			fitness_values.push_back(pair<float, C>(fitness, chrom));
 		}
-		cout << endl;
-		cout << "Average fitness: " << fitness_total / population.size() << endl;
-		cout << "Maximum fitness: " << fitness_max << endl;
+		//cout << endl;
+		//cout << "Average fitness: " << fitness_total / population.size() << endl;
+		//cout << "Maximum fitness: " << fitness_max << endl;
 
 		parent_pool.insert(parent_pool.begin(), population.begin(), population.end());
 
@@ -218,13 +225,13 @@ protected:
 
 		sort(fitness_values.begin(), fitness_values.end());
 
-		cout << "fitness_values.size() == " << fitness_values.size() << endl;
+		//cout << "fitness_values.size() == " << fitness_values.size() << endl;
 
-		cout << "pushing back...";
+		//cout << "pushing back...";
 		for (int i = 0; i < 2; i++) {
 			pool.push_back(get<1>(fitness_values[i]));
 		}
-		cout << "pushed back" << endl;
+		//cout << "pushed back" << endl;
 
 		//pool.insert(pool.begin(), population.begin(), population.begin() + max_elements);
 

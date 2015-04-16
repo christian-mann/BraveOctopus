@@ -45,7 +45,6 @@ int Graph::add_vertex() {
 }
 
 void Graph::add_edge(int v1, int v2) {
-	cout << "add_edge(" << v1 << ", " << v2 << ")" << endl;
 	adjacency_list[v1].insert(v2);
 	adjacency_list[v2].insert(v1);
 }
