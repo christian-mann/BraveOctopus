@@ -15,13 +15,15 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 		double rounds = this->initial_rounds;
 
 		C soln = this->gen_random();
+		soln.fixup();
 
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		default_random_engine generator (seed);
 
 		while (generations > 0) {
 			for (int round = 0; round < rounds; round++) {
-				C new_soln = soln.mutate(this->mutation_rate);
+				C new_soln = soln.perturb();
+				new_soln.fixup();
 
 				float r = uniform_real_distribution<float>(0, 1)(generator);
 
@@ -54,8 +56,8 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 	}
 
 	private:
-	float alpha = 0.95;
-	float beta = 1.05;
+	float alpha = 0.98;
+	float beta = 1.02;
 	double initial_temperature;
 	double initial_rounds;
 };

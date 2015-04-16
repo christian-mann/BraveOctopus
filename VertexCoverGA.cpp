@@ -1,3 +1,6 @@
+#ifndef ORCA_VERTEX_COVER_GA
+#define ORCA_VERTEX_COVER_GA
+
 #include "GeneticAlgorithm.cpp"
 #include "SimulatedAnnealing.cpp"
 #include "HillClimber.cpp"
@@ -62,6 +65,14 @@ public:
 		return this->fitness_cache;
 	}
 
+	virtual VertexCoverChrom perturb() {
+		VertexCoverChrom child = *this;
+		child.fitness_cache_valid = false;
+		int n = rand() % this->size();
+		child[n] = child[n] ^ 1;
+		return child;
+	};
+
 	virtual VertexCoverChrom mutate(float mutation_rate = 0.05) {
 		// randomly flip bits
 		VertexCoverChrom child = *this;
@@ -117,6 +128,26 @@ public:
 			}
 		}
 		return child;
+	}
+
+	virtual void fixup() {
+		int N = size();
+		while (! is_viable()) {
+			int best_bit = 0;
+			int best_uncovered = N;
+			for (int i = 0; i < N; i++) {
+				if (at(i) == 0) {
+					at(i) = 1;
+					if (this->num_uncovered() < best_uncovered) {
+						best_bit = i;
+						best_uncovered = num_uncovered();
+					}
+					at(i) = 0;
+				}
+			}
+			at(best_bit) = 1;
+			cout << bitstring() << endl;
+		}
 	}
 
 	virtual bool is_viable() {
@@ -216,3 +247,5 @@ public:
 
 	virtual bool should_stop() { return false; }
 };
+
+#endif
