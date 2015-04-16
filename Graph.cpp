@@ -48,6 +48,7 @@ int Graph::num_uncovered_by(vector<bool> cover) {
 			for (int w : adjacency_list[v]) {
 				covered[w] = true;
 			}
+			covered[v] = true;
 		}
 	}
 

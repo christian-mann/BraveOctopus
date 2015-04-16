@@ -19,29 +19,30 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		default_random_engine generator (seed);
 
-		for (int i = 0; i < generations; i++) {
-			cout << "round " << i << endl;
+		while (generations > 0) {
 			for (int round = 0; round < rounds; round++) {
-				C new_soln = soln.mutate();
+				C new_soln = soln.mutate(this->mutation_rate);
 
 				float r = uniform_real_distribution<float>(0, 1)(generator);
 
 				if (new_soln.fitness() > soln.fitness() ||
 					r < exp((new_soln.fitness() - soln.fitness()) / T) ) {
+					if (new_soln.fitness() != soln.fitness()) {
+						cout << "Accepted new solution with fitness " << new_soln.fitness() << endl;
+					}
 					soln = new_soln;
-					cout << "Accepted new solution with fitness " << soln.fitness() << endl;
 				};
+
+				generations--;
 			}
 
 			T = T * this->alpha;
 			rounds = rounds * this->beta;
 
-			for (int k = 0; k < soln.size(); k++) {
-				cout << soln[k];
-			}
-			cout << endl;
-
+			cout << soln.bitstring() << endl;
 		}
+
+		cout << soln;
 	}
 
 	void set_temperature(double temp) {

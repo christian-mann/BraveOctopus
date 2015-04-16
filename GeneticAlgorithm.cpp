@@ -11,6 +11,8 @@
 
 #include "Chromosome.cpp"
 
+#define ELITE_POOL_SIZE 0
+
 using namespace std;
 
 template <class C>
@@ -104,7 +106,7 @@ public:
 		cout << "Maximum fitness: " << fitness_max << endl;
 		
 		// create the elite pool
-		this->absolute_selection(this->population, elite_pool, 2);
+		this->absolute_selection(this->population, elite_pool, ELITE_POOL_SIZE);
 
 		for (C& chrom : elite_pool) {
 			cout << "elite: " << chrom.fitness() << endl;
@@ -127,16 +129,12 @@ public:
 			child_pool.push_back(c2);
 		}
 
-		// create the mutated child pool
-		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-		default_random_engine generator (seed);
 		//cout << "Mutating..." << endl;
 		for (C& chrom : child_pool) {
 			C mutated = chrom.mutate(this->mutation_rate);
 			mutated_child_pool.push_back(mutated);
 		}
 
-		this->population.clear();
 		// put most of the new in
 		this->population = mutated_child_pool;
 
@@ -149,7 +147,7 @@ public:
 	virtual C gen_random(void) = 0;
 	virtual bool should_stop(void) = 0;
 
-private:
+protected:
 	vector<C> population;
 
 	float mutation_rate,

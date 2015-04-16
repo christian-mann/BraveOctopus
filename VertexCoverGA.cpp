@@ -1,5 +1,6 @@
 #include "GeneticAlgorithm.cpp"
 #include "SimulatedAnnealing.cpp"
+#include "HillClimber.cpp"
 #include "Graph.cpp"
 #include "Chromosome.cpp"
 
@@ -41,15 +42,23 @@ public:
 			return this->fitness_cache;
 		}
 
-		int cover_size = 0;
+		VertexCoverChrom::total_fitness_evaluations++;
+
+		int graph_size = this->graph->size();
+		float num_uncovered = this->graph->num_uncovered_by(*this);
+		float num_covered = graph_size - num_uncovered;
+
+		float num_selected = 0;
 		for (int i = 0; i < this->size(); i++) {
-			cover_size += this->at(i);
+			num_selected += this->at(i);
 		}
+		float num_unselected = graph_size - num_selected;
 
-		if (cover_size == 0) return 0;
+		if (num_selected == 0) return 0;
 
-		int num_covered = this->graph->size() - this->graph->num_uncovered_by(*this);
-		this->fitness_cache = (float) num_covered * (float) num_covered / (float) cover_size;
+		float fit = ( 2 * num_covered + num_unselected );
+		this->fitness_cache = fit * fit;
+		//this->fitness_cache = ((float) num_covered * (float) num_covered - (float) cover_size) / this->graph->size();
 
 		this->fitness_cache_valid = true;
 		return this->fitness_cache;
@@ -74,7 +83,7 @@ public:
 	}
 
 	virtual VertexCoverChrom crossover(VertexCoverChrom& other) {
-		return this->uniform_crossover(other);
+		return this->single_point_crossover(other);
 	}
 
 	virtual VertexCoverChrom single_point_crossover(VertexCoverChrom& other) {
@@ -96,7 +105,6 @@ public:
 	}
 
 	virtual VertexCoverChrom uniform_crossover(VertexCoverChrom& other) {
-		// single-point crossover
 		int size = other.size();
 
 		VertexCoverChrom child(this->graph);
@@ -121,11 +129,23 @@ public:
 		return this->graph->num_uncovered_by(*this);
 	}
 
+	string bitstring() {
+		string s = "";
+		for (int i = 0; i < this->size(); i++) {
+			s.append(this->at(i) ? "1" : "0");
+		}
+		return s;
+	}
+
+	static int total_fitness_evaluations;
 private:
 	Graph *graph;
 	float fitness_cache;
 	bool fitness_cache_valid = false;
 };
+
+// C++ is so dumb
+int VertexCoverChrom::total_fitness_evaluations;
 
 ostream &operator<<(ostream &os, VertexCoverChrom &m) {
 	os << "vertex count: " << accumulate(m.begin(), m.end(), 0) << endl;
@@ -166,6 +186,25 @@ private:
 	Graph graph;
 public:
 	VertexCoverSimulatedAnnealing(Graph g) {
+		this->graph = g;
+	}
+
+	virtual VertexCoverChrom gen_random() {
+		vector<bool> chrom(this->graph.size());
+		for (int i = 0; i < chrom.size(); i++) {
+			chrom[i] = rand() % 2;
+		}
+		return VertexCoverChrom(&(this->graph), chrom);
+	}
+
+	virtual bool should_stop() { return false; }
+};
+
+class VertexCoverHillClimbing : public HillClimbing<VertexCoverChrom> {
+private:
+	Graph graph;
+public:
+	VertexCoverHillClimbing (Graph g) {
 		this->graph = g;
 	}
 
