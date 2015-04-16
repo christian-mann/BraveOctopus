@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 	*/
 
 	// random generated graph
-	for (int i = 0; i < graph_size * graph_size * 0.01; i++) {
+	for (int i = 0; i < graph_size * graph_size * 0.1; i++) {
 		g.add_edge(rand() % (graph_size - 10), rand() % (graph_size - 10));
 	}
 
@@ -92,6 +92,8 @@ int main(int argc, char **argv) {
 		VertexCoverHillClimbing vhc(g);
 		vhc.run(generations);
 	}
+
+	g.serialize("graph.txt");
 
 	cout << "Total fitness evaluations: " << VertexCoverChrom::total_fitness_evaluations << endl;
 }

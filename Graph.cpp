@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <fstream>
 
 using namespace std;
 class Graph {
@@ -20,6 +21,9 @@ public:
 	int add_vertex();
 	void add_edge(int v1, int v2);
 	int num_uncovered_by(vector<bool> cover);
+
+	void serialize(string filename);
+	static Graph deserialize(string filename);
 };
 
 Graph::Graph() {
@@ -62,6 +66,38 @@ int Graph::num_uncovered_by(vector<bool> cover) {
 
 int Graph::size() {
 	return adjacency_list.size();
+}
+
+void Graph::serialize(string filename) {
+	ofstream outfile;
+	outfile.open(filename);
+	outfile << adjacency_list.size() << endl;
+	for (set<int> adj_set : adjacency_list) {
+		outfile << adj_set.size() << " ";
+		for (int j : adj_set) {
+			outfile << j << " ";
+		}
+		outfile << endl;
+	}
+}
+
+Graph Graph::deserialize(string filename) {
+	ifstream infile(filename);
+	int N;
+	infile >> N;
+
+	Graph g(N);
+
+	for (int i = 0; i < N; i++) {
+		int M;
+		infile >> M;
+		for (int v = 0; v < M; v++) {
+			int j;
+			infile >> j;
+			g.adjacency_list[i].insert(j);
+		}
+	}
+	return g;
 }
 
 #endif
