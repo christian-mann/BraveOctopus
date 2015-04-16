@@ -11,8 +11,6 @@
 
 using namespace std;
 
-Graph static_graph;
-
 class VertexCoverChrom : public Chromosome<VertexCoverChrom>, public vector<bool> {
 
 public:
