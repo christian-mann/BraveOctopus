@@ -7,6 +7,8 @@
 #include <set>
 #include <fstream>
 
+#include <assert.h>
+
 using namespace std;
 class Graph {
 private:
@@ -20,6 +22,7 @@ public:
 
 	int add_vertex();
 	void add_edge(int v1, int v2);
+	int num_edges();
 	int num_uncovered_by(vector<bool> cover);
 
 	void serialize(string filename);
@@ -33,6 +36,7 @@ Graph::Graph(int vertices) {
 	while (adjacency_list.size() < vertices) {
 		add_vertex();
 	}
+	assert (adjacency_list.size() == vertices);
 }
 
 int Graph::add_vertex() {
@@ -41,8 +45,17 @@ int Graph::add_vertex() {
 }
 
 void Graph::add_edge(int v1, int v2) {
+	cout << "add_edge(" << v1 << ", " << v2 << ")" << endl;
 	adjacency_list[v1].insert(v2);
 	adjacency_list[v2].insert(v1);
+}
+
+int Graph::num_edges() {
+	int n = 0;
+	for (set<int> s : adjacency_list) {
+		n += s.size();
+	}
+	return n;
 }
 
 int Graph::num_uncovered_by(vector<bool> cover) {
@@ -72,30 +85,27 @@ void Graph::serialize(string filename) {
 	ofstream outfile;
 	outfile.open(filename);
 	outfile << adjacency_list.size() << endl;
-	for (set<int> adj_set : adjacency_list) {
-		outfile << adj_set.size() << " ";
-		for (int j : adj_set) {
-			outfile << j << " ";
+	outfile << num_edges() << endl;
+	for (int v1 = 0; v1 < adjacency_list.size(); v1++) {
+		for (int v2 : adjacency_list[v1]) {
+			outfile << v1 << " " << v2 << endl;
 		}
-		outfile << endl;
 	}
 }
 
 Graph Graph::deserialize(string filename) {
 	ifstream infile(filename);
 	int N;
+	int E;
 	infile >> N;
+	infile >> E;
 
 	Graph g(N);
 
-	for (int i = 0; i < N; i++) {
-		int M;
-		infile >> M;
-		for (int v = 0; v < M; v++) {
-			int j;
-			infile >> j;
-			g.adjacency_list[i].insert(j);
-		}
+	for (int i = 0; i < E; i++) {
+		int v1, v2;
+		infile >> v1 >> v2;
+		g.add_edge(v1, v2);
 	}
 	return g;
 }
