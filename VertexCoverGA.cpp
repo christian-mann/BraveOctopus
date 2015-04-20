@@ -54,11 +54,17 @@ public:
 			num_selected += this->at(i);
 		}
 		float num_unselected = graph_size - num_selected;
+		int max_degree = graph->max_degree();
 
 		if (num_selected == 0) return 0;
 
-		//float fit = ( 2 * num_covered + num_unselected );
-		float fit = num_unselected * (is_viable() ? 2 : (num_covered / graph_size) * (num_covered / graph_size) );
+		float fit;
+		//fit = ( num_unselected - 2 * max_degree * num_uncovered );
+		if (num_uncovered == 0) {
+			//fit = fit * 2;
+		}
+		fit = ( 2 * num_covered + num_unselected );
+		//fit = num_unselected + num_covered;
 		//
 		//float fit = (num_covered * num_covered * num_covered + num_unselected) * (num_uncovered == 0 ? graph_size : 0.00001);
 		this->fitness_cache = fit;
@@ -93,7 +99,12 @@ public:
 	}
 
 	virtual VertexCoverChrom crossover(VertexCoverChrom& other) {
-		return this->single_point_crossover(other);
+		VertexCoverChrom child = this->single_point_crossover(other);
+		//cout << "P1: " << fitness() << endl;
+		//cout << "P2: " << other.fitness() << endl;
+		//cout << "C1: " << child.fitness() << endl;
+		//cout << endl;
+		return child;
 	}
 
 	virtual VertexCoverChrom single_point_crossover(VertexCoverChrom& other) {
@@ -114,6 +125,27 @@ public:
 		return child;
 	}
 
+	virtual VertexCoverChrom two_point_crossover(VertexCoverChrom& other) {
+		// single-point crossover
+		int size = other.size();
+		int N = rand() % size;
+		int M = rand() % size;
+
+		VertexCoverChrom child(this->graph);
+		child.resize(size);
+		
+		for (int i = 0; i < size; i++) {
+			if (i <= N && i <= M) {
+				child[i] = other.at(i);
+			} else if (i > N && i <= M) {
+				child[i] = this->at(i);
+			} else {
+				child[i] = other.at(i);
+			}
+		}
+		return child;
+	}
+
 	virtual VertexCoverChrom uniform_crossover(VertexCoverChrom& other) {
 		int size = other.size();
 
@@ -121,7 +153,7 @@ public:
 		child.resize(size);
 		
 		for (int i = 0; i < size; i++) {
-			bool b = rand() % 2;
+			bool b = rand() % 3;
 			if (b) {
 				child[i] = this->at(i);
 			} else {
@@ -136,6 +168,10 @@ public:
 		while (! is_viable()) {
 			int best_bit = 0;
 			int best_uncovered = N;
+			
+			// randomly
+			best_bit = rand() % N;
+			/*
 			for (int i = 0; i < N; i++) {
 				if (at(i) == 0) {
 					at(i) = 1;
@@ -146,6 +182,7 @@ public:
 					at(i) = 0;
 				}
 			}
+			*/
 			at(best_bit) = 1;
 			//cout << bitstring() << endl;
 		}

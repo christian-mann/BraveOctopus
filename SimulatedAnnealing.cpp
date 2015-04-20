@@ -10,7 +10,7 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 	void initialize(void) {
 	}
 
-	void run(int generations) {
+	C run(int generations) {
 		double T = this->initial_temperature;
 		double rounds = this->initial_rounds;
 
@@ -18,17 +18,16 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 		//soln.fixup();
 		//
 		C soln = this->gen_random();
+		C best_soln = soln;
 
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		default_random_engine generator (seed);
 
-		while (soln.fitness() < fitness_goal || generations > 0) {
+		while (best_soln.fitness() < this->fitness_goal || generations > 0) {
+			int prev_best_fit = best_soln.fitness();
 			for (int round = 0; round < rounds; round++) {
 				C new_soln = soln;
-				for (int i = 0; i < (round % 4) / 3 + 1; i++) {
-					new_soln.perturb();
-				}
-				//new_soln.fixup();
+				new_soln.perturb();
 
 
 				if (new_soln.fitness() >= soln.fitness()) {
@@ -42,17 +41,18 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 						soln = new_soln;
 					}
 				}
-				/*
-				if (new_soln.fitness() > soln.fitness() ||
-					r < exp((new_soln.fitness() - soln.fitness()) / T) ) {
-					if (new_soln.fitness() != soln.fitness()) {
-						//cout << "Accepted new solution with fitness " << new_soln.fitness() << endl;
-					}
-					soln = new_soln;
-				};
-				*/
+
+				if (soln.fitness() > best_soln.fitness()) {
+					best_soln = soln;
+				}
 
 				generations--;
+			}
+
+			if (prev_best_fit == best_soln.fitness() && T <= 0.2) {
+				// kick
+				cout << "KICK" << endl;
+				T *= 2;
 			}
 
 			T = T * this->alpha;
@@ -63,7 +63,8 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 			cout << generations << endl;
 		}
 
-		cout << soln;
+		cout << best_soln;
+		return best_soln;
 	}
 
 	void set_temperature(double temp) {
@@ -74,18 +75,12 @@ class SimulatedAnnealing : public GeneticAlgorithm<C> {
 		this->initial_rounds = temp;
 	}
 
-	void set_goal(float goal) {
-		this->fitness_goal = goal;
-	}
-	
 
 	private:
-	float alpha = 0.98; // temperature decay
+	float alpha = 0.95; // temperature decay
 	float beta = 1.02; // round increase
 	double initial_temperature;
 	double initial_rounds;
-
-	float fitness_goal = 0;
 };
 
 #endif

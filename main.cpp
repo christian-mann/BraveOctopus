@@ -24,9 +24,6 @@ int main(int argc, char **argv) {
 	parser.add_option("--target")
 		.type("float")
 		.dest("target");
-	parser.add_option("--graph-size")
-		.type("int")
-		.set_default("100");
 	parser.add_option("--algorithm-type")
 		.type("string")
 		.set_default("ga");
@@ -55,37 +52,13 @@ int main(int argc, char **argv) {
 	string algorithm_type = (string) args.get("algorithm_type");
 	int pool_size = (int) args.get("pool_size");
 
-
 	Graph g;
 	int graph_size;
 	if (args.is_set("graph_file")) {
 		g = Graph::deserialize((string) args.get("graph_file"));
 		graph_size = g.size();
-	} else if (args.is_set("graph_size")) {
-		// random generated graph
-
-		graph_size = (int) args.get("graph_size");
-		g = Graph(graph_size);
-
-
-		/*
-		// make good solution
-		for (int v2 = 0; v2 < graph_size; v2++) {
-			g.add_edge(v2, rand() % 50);
-		}
-
-		// hide it
-		for (int v2 = 0; v2 < graph_size; v2++) {
-			int v1 = rand() % 50 + 10;
-			g.add_edge(v1, v2);
-		}
-		*/
-
-		for (int i = 0; i < graph_size * graph_size * 0.002; i++) {
-			g.add_edge(rand() % (graph_size - 1), rand() % (graph_size - 1));
-		}
 	} else {
-		cerr << "I need one of graph-size or graph-file" << endl;
+		cerr << "I need graph-file" << endl;
 		exit(1);
 	}
 
@@ -94,11 +67,14 @@ int main(int argc, char **argv) {
 		VertexCoverGeneticAlgorithm vga(g);
 		vga.set_mutation_rate(mutation_rate);
 		vga.set_population_size(pool_size);
+		if (args.is_set("target")) {
+			vga.set_goal((float) args.get("target"));
+		}
 		vga.run(generations);
 	} else if (algorithm_type == "sa") {
 		VertexCoverSimulatedAnnealing vsa(g);
 		vsa.set_temperature(2);
-		vsa.set_iterations(1000);
+		vsa.set_iterations(g.size());
 		vsa.set_mutation_rate(mutation_rate);
 
 		if (args.is_set("target")) {
@@ -115,8 +91,6 @@ int main(int argc, char **argv) {
 	} else {
 		cerr << "Unrecognized algorithm type" << endl;
 	}
-
-	g.serialize("graph.txt");
 
 	cout << "Total fitness evaluations: " << VertexCoverChrom::total_fitness_evaluations << endl;
 }

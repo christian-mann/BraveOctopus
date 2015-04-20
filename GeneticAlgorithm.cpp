@@ -54,14 +54,20 @@ public:
 		}
 	}
 
-	void run(int generations) {
+	C run(int generations) {
 		this->initialize();
 
 		if (generations < 0) {
 			throw invalid_argument("generations must be >= 0");
 		}
 
-		for (int i = 0; i < generations; i++) {
+		cout << "fitness goal " << fitness_goal << endl;
+
+		int i;
+		for (i = 0; 
+				(i < generations) 
+					|| (maximum_fitness(population) < fitness_goal); 
+				i++) {
 			this->step_once();
 			int num_viable = 0,
 				num_inviable = 0;
@@ -72,17 +78,19 @@ public:
 					num_inviable++;
 				}
 			}
-			if (i % 100 == 0)
-				cout << "Generation " << i << " " << num_viable << " viable; " << num_inviable << " inviable" << endl;
+			if (i % 100 == 0 || i < 10) {
+				cout << "Generation " << i << " " << "Average fitness: " << average_fitness(population) << " Maximum fitness: " << maximum_fitness(population) << endl;
+			}
 		}
 
-		cout << "Best element after " << generations << " generations: " << endl;
+		cout << "Best element after " << i << " generations: " << endl;
 		vector<C> best;
 		this->absolute_selection(this->population, best, 1);
 		cout << best[0] << endl;
 		//for (C& elem : this->population) {
 			//cout << elem << endl;
 		//}
+		return best[0];
 	}
 
 	void step_once(void) {
@@ -123,12 +131,18 @@ public:
 			C& p1 = parent_pool[rand() % this->population.size()];
 			C& p2 = parent_pool[rand() % this->population.size()];
 
-			C c1 = p1.crossover(p2);
-			C c2 = p2.crossover(p1);
+			C c1, c2;
+			if (rand() % 10 < 7) {
+				c1 = p1.crossover(p2);
+				c2 = p2.crossover(p1);
 
-			if (rand() % 100 == 0) {
-				c1.fixup();
-				c2.fixup();
+				//cout << "p1 " << p1.bitstring() << endl;
+				//cout << "p2 " << p2.bitstring() << endl;
+				//cout << "c1 " << c1.bitstring() << endl;
+				//cout << endl;
+			} else {
+				c1 = p1;
+				c2 = p2;
 			}
 
 			child_pool.push_back(c1);
@@ -150,6 +164,11 @@ public:
 		}
 	}
 
+	void set_goal(float goal) {
+		this->fitness_goal = goal;
+	}
+	
+
 	virtual C gen_random(void) = 0;
 	virtual C gen_blank(void) = 0;
 	virtual bool should_stop(void) = 0;
@@ -160,6 +179,7 @@ protected:
 	float mutation_rate,
 		  crossover_rate;
 	int population_size;
+	float fitness_goal = 0;
 
 	void roulette_selection(vector<C>& population, vector<C> &parent_pool) {
 		// assign fitness values for each
@@ -168,7 +188,7 @@ protected:
 		float fitness_total = 0;
 		for (C& chrom : this->population) {
 			float fitness = chrom.fitness();
-			fitness_total += fitness;
+			fitness_total += (fitness > 0 ? fitness : exp(fitness));
 		}
 		//cout << endl;
 
@@ -181,7 +201,7 @@ protected:
 			// generate random number
 			float r = uniform_dist(generator);
 			for (C& chrom : this->population) {
-				r -= chrom.fitness();
+				r -= (chrom.fitness() > 0 ? chrom.fitness() : exp(chrom.fitness()));
 				if (r <= 0) {
 					parent_pool.push_back(chrom);
 					break;
@@ -262,6 +282,25 @@ protected:
 			pool.push_back(c1);
 		}
 	}
+
+	float average_fitness(vector<C> &population) {
+		float fitness_total;
+		for (C& chrom : this->population) {
+			float fitness = chrom.fitness();
+			fitness_total += fitness;
+		}
+		return fitness_total / population.size();
+	}
+	
+	float maximum_fitness(vector<C> &population) {
+		float fitness_max;
+		for (C& chrom : this->population) {
+			float fitness = chrom.fitness();
+			fitness_max = (fitness > fitness_max ? fitness : fitness_max);
+		}
+		return fitness_max;
+	}
+
 };
 
 #endif

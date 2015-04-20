@@ -22,8 +22,10 @@ public:
 
 	int add_vertex();
 	void add_edge(int v1, int v2);
+	bool has_edge(int v1, int v2);
 	int num_edges();
 	int num_uncovered_by(vector<bool> cover);
+	int max_degree();
 
 	void serialize(string filename);
 	static Graph deserialize(string filename);
@@ -107,6 +109,20 @@ Graph Graph::deserialize(string filename) {
 		g.add_edge(v1, v2);
 	}
 	return g;
+}
+
+int Graph::max_degree() {
+	int d = 0;
+	for (set<int> s : adjacency_list) {
+		if (s.size() > d) {
+			d = s.size();
+		}
+	}
+	return d;
+}
+
+bool Graph::has_edge(int v1, int v2) {
+	return adjacency_list[v1].count(v2) > 0;
 }
 
 #endif
